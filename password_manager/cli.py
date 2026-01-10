@@ -1,18 +1,16 @@
-from prompt_toolkit.application import Application
-from prompt_toolkit.key_binding import KeyBindings
-from prompt_toolkit.layout import Layout
-from prompt_toolkit.layout.containers import Window, HSplit
-from prompt_toolkit.widgets import Frame
-from prompt_toolkit.layout.controls import FormattedTextControl
-
-from rich.console import Console
+from prompt_toolkit import ANSI
+from rich.console import Console, Group
 from rich.panel import Panel
 from rich.table import Table
-from prompt_toolkit.formatted_text import ANSI
-from prompt_toolkit.widgets import TextArea
-
+from prompt_toolkit.application import Application
+from prompt_toolkit.layout import Layout, FormattedTextControl
+from prompt_toolkit.layout.containers import HSplit, Window
+from prompt_toolkit.widgets import TextArea, Frame
+from prompt_toolkit.key_binding import KeyBindings
+from prompt_toolkit.styles import Style
 
 console = Console()
+kb = KeyBindings()
 
 
 class Menu:
@@ -89,13 +87,15 @@ class Menu:
         self.app.run()
         return self.result
 
+
 class MessageScreen:
-    def __init__(self, title: str, message: str):
+    def __init__(self, title: str, message: str, positive: bool = False):
         self.title = title
         self.message = message
+        self.positive = positive
 
     def run(self):
-        color = "green" if self.title == "Success" else "red"
+        color = "green" if self.positive else "red"
 
         text = f"[bold {color}]{self.title}[/bold {color}]\n\n{self.message}\n\n[dim]Press Enter to continue[/dim]"
         panel = Panel(text, border_style=color)
@@ -104,12 +104,7 @@ class MessageScreen:
             console.print(panel)
         rendered = capture.get()
 
-        kb = KeyBindings()
-
         @kb.add("c-c")
-        def _(event):
-            event.app.exit()
-
         @kb.add("enter")
         @kb.add("escape")
         def _(event):
@@ -128,6 +123,7 @@ class MessageScreen:
 
         app.run()
 
+
 class InputScreen:
     def __init__(self, title: str, prompt: str, password: bool = False):
         self.title = title
@@ -136,57 +132,55 @@ class InputScreen:
         self.value = None
 
     def run(self):
-        input_field = TextArea(
-            prompt=f"{self.prompt}: ",
+        title_area = TextArea(prompt=self.title, height=2, style="class:title")
+
+        text_area = TextArea(
+            prompt=self.prompt + ": ",
             password=self.password,
             multiline=False,
-            wrap_lines=False,
+            wrap_lines=True,
         )
 
-        kb = KeyBindings()
+        footer = TextArea(
+            text="Type and press Enter • Esc to cancel",
+            style="class:footer",
+            height=1,
+            focusable=False,
+        )
 
-        @kb.add("c-c")
-        def _(event):
-            event.app.exit()
+        body = HSplit([
+            title_area,
+            text_area,
+            footer,
+        ], padding=1)
+
+        frame = Frame(
+            body=body
+        )
 
         @kb.add("enter")
         def _(event):
-            self.value = input_field.text
+            self.value = text_area.text
             event.app.exit()
 
         @kb.add("escape")
+        @kb.add("c-c")
         def _(event):
             self.value = None
             event.app.exit()
 
-        header_panel = Panel(
-            f"[bold cyan]{self.title}[/bold cyan]\n\n"
-            "[dim]Type and press Enter • Esc to cancel[/dim]",
-            border_style="cyan",
-        )
+        layout = Layout(frame, focused_element=text_area)
 
-        with console.capture() as capture:
-            console.print(header_panel)
-        header_ansi = capture.get()
-
-        layout = Layout(
-            HSplit([
-                Window(
-                    FormattedTextControl(ANSI(header_ansi)),
-                    height=6,
-                    always_hide_cursor=True,
-                ),
-                Frame(
-                    body=input_field.__pt_container__(),
-                    title=self.prompt,
-                )
-            ]),
-            focused_element=input_field,
-        )
+        style = Style.from_dict({
+            "title": "bold italic",
+            "frame.border": "cyan",
+            "footer": "italic dim",
+        })
 
         app = Application(
             layout=layout,
             key_bindings=kb,
+            style=style,
             full_screen=True,
         )
 

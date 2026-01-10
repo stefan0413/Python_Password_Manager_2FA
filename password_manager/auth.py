@@ -54,7 +54,8 @@ def register():
 
     MessageScreen(
         title="Success",
-        message="User registered successfully."
+        message="User registered successfully.",
+        positive=True
     ).run()
 
 
@@ -97,7 +98,8 @@ def login() -> AuthSession | None:
 
     MessageScreen(
         title="Welcome",
-        message=f"Welcome, {username}."
+        message=f"Welcome, {username}.",
+        positive=True
     ).run()
 
     return AuthSession(user_id, username, aes_key)
