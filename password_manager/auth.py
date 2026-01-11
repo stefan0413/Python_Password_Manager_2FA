@@ -3,7 +3,7 @@ from . import storage, crypto
 from .cli import InputScreen, MessageScreen
 
 import pyotp
-import qrcode
+
 
 
 
@@ -59,19 +59,18 @@ def register():
     aes_key = crypto.derive_aes_key(password)
     totp_secret = crypto.aes_encrypt(secret.encode(), aes_key)
 
-    user_id = storage.create_user(username, password_hash, totp_secret)
+    storage.create_user(username, password_hash, totp_secret)
     uri = totp.provisioning_uri(
         name=username,
         issuer_name="Console Password Manager"
     )
 
-    qr = qrcode.QRCode()
-    qr.add_data(uri)
-    qr.make()
+    from .cli import QrCodeScreen
 
-    print("\nScan this QR code with Google Authenticator:\n")
-    qr.print_ascii()
-    input("\nPress Enter after scanning...")
+    QrCodeScreen(
+        title="Two-Factor Authentication Setup",
+        uri=uri
+    ).run()
 
     MessageScreen(
         title="Success",

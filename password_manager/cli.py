@@ -1,3 +1,6 @@
+import io
+
+from qrcode.main import QRCode
 from prompt_toolkit import ANSI
 from rich.console import Console, Group
 from rich.panel import Panel
@@ -57,8 +60,6 @@ class Menu:
         return ANSI(self._render_rich())
 
     def _create_keybindings(self):
-        kb = KeyBindings()
-
         @kb.add("c-c")
         def _(event):
             event.app.exit()
@@ -186,3 +187,56 @@ class InputScreen:
 
         app.run()
         return self.value
+
+class QrCodeScreen:
+    def __init__(self, title: str, uri: str):
+        self.title = title
+        self.uri = uri
+
+    def _get_qr_ascii(self) -> str:
+        qr = QRCode(border=1)
+        qr.add_data(self.uri)
+        qr.make()
+
+        buffer = io.StringIO()
+        qr.print_ascii(out=buffer, invert=True)
+        return buffer.getvalue()
+
+    def _render(self) -> str:
+        qr_ascii = self._get_qr_ascii()
+
+        with console.capture() as capture:
+            console.print(
+                Panel(
+                    Group(
+                        "[bold]Scan this QR code with Google Authenticator[/bold]\n",
+                        qr_ascii,
+                        "\n[dim]Press Enter to continue • Esc to cancel[/dim]",
+                    ),
+                    title=self.title,
+                    border_style="cyan",
+                )
+            )
+        return capture.get()
+
+    def run(self):
+        rendered = self._render()
+
+        @kb.add("enter")
+        @kb.add("escape")
+        @kb.add("c-c")
+        def _(event):
+            event.app.exit()
+
+        app = Application(
+            layout=Layout(
+                Window(
+                    FormattedTextControl(ANSI(rendered)),
+                    always_hide_cursor=True,
+                )
+            ),
+            key_bindings=kb,
+            full_screen=True,
+        )
+
+        app.run()
