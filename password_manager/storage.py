@@ -20,6 +20,7 @@ def init_db():
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             username TEXT UNIQUE NOT NULL,
             password_hash BLOB NOT NULL,
+            totp_secret BLOB NOT NULL,
             created_at TEXT NOT NULL
         )
     """)
@@ -28,25 +29,28 @@ def init_db():
     conn.close()
 
 
-def create_user(username: str, password_hash: bytes):
+def create_user(username: str, password_hash: bytes, totp_secret: bytes):
     conn = get_connection()
     cursor = conn.cursor()
 
     cursor.execute(
-        "INSERT INTO users (username, password_hash, created_at) VALUES (?, ?, ?)",
-        (username, password_hash, datetime.utcnow().isoformat())
+        "INSERT INTO users (username, password_hash, created_at, totp_secret) VALUES (?, ?, ?, ?)",
+        (username, password_hash, datetime.utcnow().isoformat(), totp_secret)
     )
+
+    user_id = cursor.lastrowid
 
     conn.commit()
     conn.close()
 
+    return user_id
 
-def get_user_by_username(username: str):
+def get_user_with_2fa(username: str):
     conn = get_connection()
     cursor = conn.cursor()
 
     cursor.execute(
-        "SELECT id, username, password_hash FROM users WHERE username = ?",
+        "SELECT id, username, password_hash, totp_secret FROM users WHERE username = ?",
         (username,)
     )
 

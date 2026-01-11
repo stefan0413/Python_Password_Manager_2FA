@@ -1,7 +1,10 @@
-# password_manager/auth.py
 
 from . import storage, crypto
 from .cli import InputScreen, MessageScreen
+
+import pyotp
+import qrcode
+
 
 
 class AuthSession:
@@ -20,7 +23,7 @@ def register():
     if not username:
         return
 
-    if storage.get_user_by_username(username):
+    if storage.get_user_with_2fa(username):
         MessageScreen(
             title="Registration Error",
             message="User already exists."
@@ -50,7 +53,25 @@ def register():
         return
 
     password_hash = crypto.hash_master_password(password)
-    storage.create_user(username, password_hash)
+    secret = pyotp.random_base32()
+    totp = pyotp.TOTP(secret)
+
+    aes_key = crypto.derive_aes_key(password)
+    totp_secret = crypto.aes_encrypt(secret.encode(), aes_key)
+
+    user_id = storage.create_user(username, password_hash, totp_secret)
+    uri = totp.provisioning_uri(
+        name=username,
+        issuer_name="Console Password Manager"
+    )
+
+    qr = qrcode.QRCode()
+    qr.add_data(uri)
+    qr.make()
+
+    print("\nScan this QR code with Google Authenticator:\n")
+    qr.print_ascii()
+    input("\nPress Enter after scanning...")
 
     MessageScreen(
         title="Success",
@@ -68,7 +89,8 @@ def login() -> AuthSession | None:
     if not username:
         return None
 
-    user = storage.get_user_by_username(username)
+    user = storage.get_user_with_2fa(username)
+
     if not user:
         MessageScreen(
             title="Login Failed",
@@ -76,7 +98,7 @@ def login() -> AuthSession | None:
         ).run()
         return None
 
-    user_id, _, password_hash = user
+    user_id, _, password_hash, encrypted_secret = user
 
     password = InputScreen(
         title="Login",
@@ -94,7 +116,33 @@ def login() -> AuthSession | None:
         ).run()
         return None
 
+    code = InputScreen(
+        title="Two-Factor Authentication",
+        prompt="Enter 6-digit authenticator code"
+    ).run()
+
+    if not code:
+        return None
+
     aes_key = crypto.derive_aes_key(password)
+
+    try:
+        secret = crypto.aes_decrypt(encrypted_secret, aes_key).decode()
+    except Exception:
+        MessageScreen(
+            title="Login Failed",
+            message="Authentication error."
+        ).run()
+        return None
+
+    totp = pyotp.TOTP(secret)
+
+    if not totp.verify(code):
+        MessageScreen(
+            title="Login Failed",
+            message="Invalid authentication code."
+        ).run()
+        return None
 
     MessageScreen(
         title="Welcome",
