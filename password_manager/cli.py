@@ -12,6 +12,8 @@ from prompt_toolkit.layout import Layout, FormattedTextControl
 from prompt_toolkit.layout.containers import HSplit, Window
 from prompt_toolkit.styles import Style
 from prompt_toolkit.widgets import Frame, TextArea
+from rich.text import Text
+
 
 console = Console()
 
@@ -183,28 +185,50 @@ class InputScreen:
         return self.value
 
 class QrCodeScreen:
-    def __init__(self, title: str, uri: str):
+    def __init__(self, title: str, uri: str, secret: str):
         self.title = title
         self.uri = uri
+        self.secret = secret
 
-    def _qr_ascii(self) -> str:
+    def _qr_rich(self) -> Text:
         qr = QRCode(border=1)
         qr.add_data(self.uri)
-        qr.make()
+        qr.make(fit=True)
 
-        buffer = io.StringIO()
-        qr.print_ascii(out=buffer, invert=True)
-        return buffer.getvalue()
+        matrix = qr.get_matrix()
+        text = Text()
+
+        for row_top, row_bottom in zip(matrix[::2], matrix[1::2]):
+            for top, bottom in zip(row_top, row_bottom):
+                if top and bottom:
+                    text.append("█", style="white")
+                elif top and not bottom:
+                    text.append("▀", style="white")
+                elif not top and bottom:
+                    text.append("▄", style="white")
+                else:
+                    text.append(" ", style="white")
+            text.append("\n")
+
+        return text
+
+    def _secret_text(self) -> Text:
+        text = Text()
+        text.append("Or enter this secret manually:\n", style="dim")
+        text.append(self.secret, style="bold yellow")
+        return text
 
     def run(self) -> None:
         panel = Panel(
-            Group(
-                "[bold]Scan this QR code with Google Authenticator[/bold]\n",
-                self._qr_ascii(),
-                "\n[dim]Press Enter to continue[/dim]",
-            ),
-            title=self.title,
-            border_style="cyan",
+                Group(
+                        "[bold]Scan this QR code with Google Authenticator[/bold]\n",
+                        self._qr_rich(),
+                        "\n",
+                        self._secret_text(),
+                        "\n[dim]Press Enter to continue[/dim]",
+                ),
+                title=self.title,
+                border_style="cyan",
         )
 
         with console.capture() as capture:
@@ -214,7 +238,6 @@ class QrCodeScreen:
         kb = KeyBindings()
 
         @kb.add("enter")
-        @kb.add("escape")
         def _(event):
             event.app.exit()
 

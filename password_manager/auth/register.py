@@ -88,6 +88,7 @@ def _show_2fa_qr_code(username: str, secret_2fa: str) -> None:
     QrCodeScreen(
         title=TITLE_2FA_SETUP,
         uri=uri,
+        secret=secret_2fa,
     ).run()
 
 def register() -> None:
