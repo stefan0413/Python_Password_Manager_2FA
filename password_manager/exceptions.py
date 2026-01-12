@@ -1,6 +1,10 @@
 # COMMON
 class InvalidArgumentException(Exception):
     pass
+class GracefulShutdownException(Exception):
+    pass
+class UserLogoutException(Exception):
+    pass
 
 # REGISTRATION
 class RegistrationException(Exception):

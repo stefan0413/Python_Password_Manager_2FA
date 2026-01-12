@@ -1,9 +1,54 @@
+from password_manager.auth import AuthSession
+from password_manager.exceptions import GracefulShutdownException, UserLogoutException
 from . import storage, auth
 from .cli import Menu
 
+def _exit_if_chosen(choice: str) -> None:
+    if choice == "Exit" or choice is None:
+        raise GracefulShutdownException
+
+def _handle_no_session()-> AuthSession | None:
+    menu = Menu(
+            title="PASSWORD MANAGER",
+            subtitle="Secure • Offline • Encrypted",
+            items=[
+                "Register",
+                "Login",
+                "Exit",
+            ],
+    )
+
+    choice = menu.run()
+
+    if choice == "Register":
+        auth.register()
+        return None
+
+    elif choice == "Login":
+        return auth.login()
+
+    _exit_if_chosen(choice)
+
+    return None
+
+def _handle_session (session: AuthSession) -> None:
+    menu = Menu(
+            title=f"Welcome, {session.username}",
+            subtitle="Vault unlocked",
+            items=[
+                "Logout",
+                "Exit",
+            ],
+    )
+
+    choice = menu.run()
+
+    if choice == "Logout":
+        raise UserLogoutException
+
+    _exit_if_chosen(choice)
 
 def main():
-    # Initialize database
     storage.init_db()
 
     session = None
@@ -11,57 +56,15 @@ def main():
 
     try:
         while running:
-            # =========================
-            # NOT LOGGED IN
-            # =========================
             if session is None:
-                menu = Menu(
-                    title="PASSWORD MANAGER",
-                    subtitle="Secure • Offline • Encrypted",
-                    items=[
-                        "Register",
-                        "Login",
-                        "Exit",
-                    ],
-                )
-
-                choice = menu.run()
-
-                if choice == "Register":
-                    auth.register()
-
-                elif choice == "Login":
-                    session = auth.login()
-
-                elif choice == "Exit" or choice is None:
-                    running = False
-
-            # =========================
-            # LOGGED IN
-            # =========================
+               session = _handle_no_session()
             else:
-                menu = Menu(
-                    title=f"Welcome, {session.username}",
-                    subtitle="Vault unlocked",
-                    items=[
-                        "Logout",
-                        "Exit",
-                    ],
-                )
-
-                choice = menu.run()
-
-                if choice == "Logout":
+                try:
+                    _handle_session(session)
+                except UserLogoutException:
                     session = None
-
-                elif choice == "Exit" or choice is None:
-                    running = False
-    except KeyboardInterrupt:
-        print("\nExiting...")
-
-    # Clean exit (session automatically destroyed)
-    print("Goodbye.")
-
+    except (KeyboardInterrupt, GracefulShutdownException):
+        pass
 
 if __name__ == "__main__":
     main()
