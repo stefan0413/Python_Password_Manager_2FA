@@ -1,2 +1,2 @@
 from .register import register
-from .login import login, AuthSession
+from .login import login

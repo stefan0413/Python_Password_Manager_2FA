@@ -9,6 +9,7 @@ from ..exceptions import (
     LoginException,
     UserDoesNotExistException,
 )
+from ..model import AuthSession
 from ..storage import users
 
 
@@ -23,12 +24,6 @@ MSG_WELCOME = "Welcome, {username}."
 PROMPT_USERNAME = "Username"
 PROMPT_PASSWORD = "Master password"
 PROMPT_2FA_CODE = "Enter 6-digit authenticator code"
-
-class AuthSession:
-    def __init__(self, user_id: int, username: str, aes_key: bytes):
-        self.user_id = user_id
-        self.username = username
-        self.aes_key = aes_key
 
 def _input_or_cancel(*, title: str, prompt: str, password: bool = False) -> str | None:
     return InputScreen(title=title, prompt=prompt, password=password).run()
@@ -71,6 +66,9 @@ def _get_and_verify_password(username: str) -> tuple[int, bytes, bytes]:
         raise LoginException
 
     aes_key = crypto.derive_aes_key(password)
+    #deleting this so the plain password is not stored in any way
+    del password
+
     return user_id, aes_key, encrypted_secret
 
 

@@ -1,5 +1,5 @@
-from password_manager.auth import AuthSession
 from password_manager.exceptions import GracefulShutdownException, UserLogoutException
+from password_manager.model import AuthSession
 from password_manager.storage import init_db
 from . import auth
 from .cli import Menu

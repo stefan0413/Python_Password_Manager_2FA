@@ -1,4 +1,4 @@
-from db import db
+from password_manager.storage.db import db
 from password_manager.password_entry import PasswordEntry
 
 
@@ -48,17 +48,11 @@ def get_password_entry(entry_id: int, user_id: int) -> PasswordEntry | None:
     with db() as conn:
         row = conn.execute(
             """
-            SELECT id,
-                   user_id,
-                   group_id,
-                   title,
-                   service_url,
-                   account_username,
-                   password_encrypted,
-                   notes
-            FROM password_entries
-            WHERE id = ?
-              AND user_id = ?
+                SELECT id, user_id, group_id, title,
+                       service_url, account_username,
+                       password_encrypted, notes
+                FROM password_entries
+                WHERE id = ? AND user_id = ?
             """,
             (entry_id, user_id)
         ).fetchone()

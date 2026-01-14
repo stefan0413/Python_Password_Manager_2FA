@@ -1,5 +1,6 @@
 from datetime import datetime, timezone
-from db import db
+from password_manager.storage.db import db
+
 
 SQL_CREATE_GROUPS_TABLE = """
     CREATE TABLE IF NOT EXISTS groups (
