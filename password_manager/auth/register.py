@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pyotp
 
-from .. import storage, crypto
+from .. import crypto
 from ..cli import InputScreen, MessageScreen, QrCodeScreen
 from ..exceptions import (
     InvalidArgumentException,
@@ -10,6 +10,8 @@ from ..exceptions import (
     UserAlreadyExistsException,
     PasswordsDoNotMatch,
 )
+from ..storage import users
+
 
 TITLE_REGISTER = "Register"
 TITLE_2FA_SETUP = "Two-Factor Authentication Setup"
@@ -40,7 +42,7 @@ def _validate_new_username(username: str | None) -> None:
     if not username:
         raise InvalidArgumentException
 
-    if storage.get_user_with_2fa(username):
+    if users.get_user_with_2fa(username):
         _error(MSG_USER_EXISTS)
         raise UserAlreadyExistsException
 
@@ -78,8 +80,7 @@ def _register_user(username: str, password: str, secret_2fa: str) -> None:
     encrypted_secret = crypto.aes_encrypt(secret_2fa.encode(), aes_key)
     password_hash = crypto.hash_master_password(password)
 
-    storage.create_user(username, password_hash, encrypted_secret)
-
+    users.create_user(username, password_hash, encrypted_secret)
 
 def _show_2fa_qr_code(username: str, secret_2fa: str) -> None:
     totp = pyotp.TOTP(secret_2fa)

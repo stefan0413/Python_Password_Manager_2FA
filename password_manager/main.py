@@ -1,6 +1,7 @@
 from password_manager.auth import AuthSession
 from password_manager.exceptions import GracefulShutdownException, UserLogoutException
-from . import storage, auth
+from password_manager.storage import init_db
+from . import auth
 from .cli import Menu
 
 def _exit_if_chosen(choice: str) -> None:
@@ -49,7 +50,7 @@ def _handle_session (session: AuthSession) -> None:
     _exit_if_chosen(choice)
 
 def main():
-    storage.init_db()
+    init_db()
 
     session = None
     running = True

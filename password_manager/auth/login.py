@@ -2,13 +2,15 @@ from __future__ import annotations
 
 import pyotp
 
-from .. import storage, crypto
+from .. import crypto
 from ..cli import InputScreen, MessageScreen
 from ..exceptions import (
     InvalidArgumentException,
     LoginException,
     UserDoesNotExistException,
 )
+from ..storage import users
+
 
 TITLE_LOGIN = "Login"
 TITLE_2FA_VERIFY = "Two-Factor Authentication"
@@ -45,7 +47,7 @@ def _get_existing_username() -> str:
     if not username:
         raise InvalidArgumentException
 
-    user = storage.get_user_with_2fa(username)
+    user = users.get_user_with_2fa(username)
     if not user:
         _error(MSG_INVALID_CREDENTIALS)
         raise UserDoesNotExistException
@@ -54,7 +56,7 @@ def _get_existing_username() -> str:
 
 
 def _get_and_verify_password(username: str) -> tuple[int, bytes, bytes]:
-    user_id, _, password_hash, encrypted_secret = storage.get_user_with_2fa(username)
+    user_id, _, password_hash, encrypted_secret = users.get_user_with_2fa(username)
 
     password = _input_or_cancel(
         title=TITLE_LOGIN,
