@@ -61,3 +61,17 @@ def get_password_entry(entry_id: int, user_id: int) -> PasswordEntry | None:
         return None
 
     return PasswordEntry(*row)
+
+def list_password_entries(user_id: int) -> list[tuple[int, str, str]]:
+    with db() as conn:
+        rows = conn.execute(
+            """
+            SELECT id, title, account_username
+            FROM password_entries
+            WHERE user_id = ?
+            ORDER BY created_at DESC
+            """,
+            (user_id,)
+        ).fetchall()
+
+    return rows

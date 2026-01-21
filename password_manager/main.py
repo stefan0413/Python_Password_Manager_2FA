@@ -1,6 +1,8 @@
 from password_manager.exceptions import GracefulShutdownException, UserLogoutException
 from password_manager.model import AuthSession
 from password_manager.storage import init_db
+from password_manager.vault.add_password import add_password_flow
+from password_manager.vault.list_passwords import list_passwords_flow
 from . import auth
 from .cli import Menu
 
@@ -37,14 +39,22 @@ def _handle_session (session: AuthSession) -> None:
             title=f"Welcome, {session.username}",
             subtitle="Vault unlocked",
             items=[
+                "Add password",
+                "List passwords",
                 "Logout",
                 "Exit",
             ],
     )
 
+    print(f"Session {session.username} {session.user_id} {session.aes_key}")
+
     choice = menu.run()
 
-    if choice == "Logout":
+    if choice == "Add password":
+        add_password_flow(session)
+    elif choice == "List passwords":
+        list_passwords_flow(session)
+    elif choice == "Logout":
         raise UserLogoutException
 
     _exit_if_chosen(choice)
