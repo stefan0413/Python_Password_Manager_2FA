@@ -1,5 +1,6 @@
 import random
 import string
+from wordfreq import top_n_list
 
 
 def generate_password(
@@ -53,11 +54,7 @@ def generate_password(
 
     return "".join(password_chars)
 
-
-WORDLIST = [
-    "correct", "horse", "battery", "staple",
-    "secure", "random", "crypto", "vault"
-]
+WORDLIST = top_n_list("en", 5000)
 
 def _validate_passphrase(words, separator) -> None:
     if words <= 0:

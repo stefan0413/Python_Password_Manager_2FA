@@ -140,20 +140,8 @@ def _passphrase_flow() -> None:
                 min_value=1,
             )
 
-            separator = InputScreen(
-                title="Passphrase",
-                prompt="Word separator (default: -)",
-            ).run()
-
-            if separator is None:
-                raise KeyboardInterrupt
-
-            if separator.strip() == "":
-                separator = "-"
-
             passphrase = generate_passphrase(
                 words=words,
-                separator=separator,
                 capitalize=True,
             )
 
