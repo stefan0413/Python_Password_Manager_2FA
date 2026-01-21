@@ -52,8 +52,6 @@ def _handle_session (session: AuthSession) -> None:
             ],
     )
 
-    print(f"Session {session.username} {session.user_id} {session.aes_key}")
-
     choice = menu.run()
 
     if choice == "Add password":

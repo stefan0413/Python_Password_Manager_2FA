@@ -76,6 +76,7 @@ def _verify_2fa(encrypted_secret: bytes, aes_key: bytes) -> None:
     code = _input_or_cancel(
         title=TITLE_2FA_VERIFY,
         prompt=PROMPT_2FA_CODE,
+        password=True,
     )
     if not code:
         raise InvalidArgumentException

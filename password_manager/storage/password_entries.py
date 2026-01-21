@@ -75,3 +75,42 @@ def list_password_entries(user_id: int) -> list[tuple[int, str, str]]:
         ).fetchall()
 
     return rows
+
+def update_password_entry(
+    entry_id: int,
+    user_id: int,
+    title: str,
+    service_url: str | None,
+    account_username: str,
+    password_encrypted: bytes,
+    notes: str | None,
+) -> None:
+    with db() as conn:
+        conn.execute(
+            """
+            UPDATE password_entries
+            SET title = ?,
+                service_url = ?,
+                account_username = ?,
+                password_encrypted = ?,
+                notes = ?,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE id = ? AND user_id = ?
+            """,
+            (
+                title,
+                service_url,
+                account_username,
+                password_encrypted,
+                notes,
+                entry_id,
+                user_id,
+            )
+        )
+
+def delete_password_entry(entry_id: int, user_id: int) -> None:
+    with db() as conn:
+        conn.execute(
+            "DELETE FROM password_entries WHERE id = ? AND user_id = ?",
+            (entry_id, user_id),
+        )

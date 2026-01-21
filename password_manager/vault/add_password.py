@@ -19,13 +19,19 @@ def _input_field(prompt: str, password: bool = False) -> str:
 
     return value
 
+def _optional_input(prompt: str) -> str | None:
+    return InputScreen(
+        title="Add Password",
+        prompt=prompt
+    ).run() or None
+
 def add_password_flow(session: AuthSession) -> None:
     title = _input_field("Title (e.g. GitHub)")
-    service_url = _input_field("Service URL (optional)")
     account_username = _input_field("Account Username")
     plaintext_password = _input_field("Account Password", True)
 
-    notes = _input_field("Notes")
+    service_url = _optional_input("Service URL (optional)")
+    notes = _optional_input("Notes")
 
     encrypted_password = aes_encrypt(
         plaintext_password.encode(),

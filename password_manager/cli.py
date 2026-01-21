@@ -14,6 +14,8 @@ from prompt_toolkit.styles import Style
 from prompt_toolkit.widgets import Frame, TextArea
 from rich.text import Text
 
+from password_manager.utils.clipboard import copy_to_clipboard
+
 
 console = Console()
 
@@ -82,6 +84,61 @@ class Menu:
 
         app.run()
         return self.result
+
+class PasswordViewScreen:
+    def __init__(
+        self,
+        *,
+        title: str,
+        message: str,
+        password: str,
+    ):
+        self.title = title
+        self.message = message
+        self.password = password
+
+    def run(self) -> None:
+        color = "green"
+
+        panel = Panel(
+            f"[bold {color}]{self.title}[/bold {color}]\n\n"
+            f"{self.message}\n\n"
+            "[dim]Press Enter to continue | Press C to copy password[/dim]",
+            border_style=color,
+        )
+
+        with console.capture() as capture:
+            console.print(panel)
+
+        rendered = capture.get()
+        kb = KeyBindings()
+
+        # Exit
+        @kb.add("enter")
+        @kb.add("escape")
+        def _(event):
+            event.app.exit()
+
+        @kb.add("c-c")
+        def _(_):
+            raise KeyboardInterrupt
+
+        @kb.add("c")
+        def _(event):
+            copy_to_clipboard(self.password)
+
+        app = Application(
+            layout=Layout(
+                Window(
+                    FormattedTextControl(ANSI(rendered)),
+                    always_hide_cursor=True,
+                )
+            ),
+            key_bindings=kb,
+            full_screen=True,
+        )
+
+        app.run()
 
 class MessageScreen:
     def __init__(self, title: str, message: str, positive: bool = False):
