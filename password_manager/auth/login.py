@@ -44,15 +44,26 @@ def _get_existing_username() -> str:
 
     user = users.get_user_with_2fa(username)
     if not user:
+        # making bruteforce harder as it's better to avoid showing that a specific username does not exist
+        _get_password()
         _error(MSG_INVALID_CREDENTIALS)
-        raise UserDoesNotExistException
+        raise LoginException
 
     return username
 
+def _get_password() -> str:
+    password = _input_or_cancel(
+            title=TITLE_LOGIN,
+            prompt=PROMPT_PASSWORD,
+            password=True,
+    )
+
+    if not password:
+        raise InvalidArgumentException
+
+    return password
 
 def _get_and_verify_password(username: str) -> tuple[int, bytes, bytes]:
-    user_id, _, password_hash, encrypted_secret = users.get_user_with_2fa(username)
-
     password = _input_or_cancel(
         title=TITLE_LOGIN,
         prompt=PROMPT_PASSWORD,
@@ -60,6 +71,8 @@ def _get_and_verify_password(username: str) -> tuple[int, bytes, bytes]:
     )
     if not password:
         raise InvalidArgumentException
+
+    user_id, _, password_hash, encrypted_secret = users.get_user_with_2fa(username)
 
     if not crypto.verify_master_password(password, password_hash):
         _error(MSG_INVALID_CREDENTIALS)
@@ -71,7 +84,6 @@ def _get_and_verify_password(username: str) -> tuple[int, bytes, bytes]:
     del password
 
     return user_id, aes_key, encrypted_secret
-
 
 def _verify_2fa(encrypted_secret: bytes, aes_key: bytes) -> None:
     code = _input_or_cancel(
@@ -93,12 +105,15 @@ def _verify_2fa(encrypted_secret: bytes, aes_key: bytes) -> None:
         raise LoginException
 
 def login() -> AuthSession | None:
-    try:
-        username = _get_existing_username()
-        user_id, aes_key, encrypted_secret = _get_and_verify_password(username)
-        _verify_2fa(encrypted_secret, aes_key)
-    except (LoginException, InvalidArgumentException):
-        return None
+    while True:
+        try:
+            username = _get_existing_username()
+            user_id, aes_key, encrypted_secret = _get_and_verify_password(username)
+            _verify_2fa(encrypted_secret, aes_key)
+
+            break
+        except (LoginException, InvalidArgumentException):
+            pass
 
     _success(MSG_WELCOME.format(username=username))
     return AuthSession(user_id, username, aes_key)

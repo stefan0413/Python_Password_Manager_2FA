@@ -1,6 +1,7 @@
 from password_manager.exceptions import GracefulShutdownException, UserLogoutException
 from password_manager.model import AuthSession
 from password_manager.storage import init_db
+from password_manager.utils.clipboard import clear
 from password_manager.vault.add_password import add_password_flow
 from password_manager.vault.groups import create_group_flow
 from password_manager.vault.list_passwords import list_passwords_flow, search_passwords_flow
@@ -88,6 +89,7 @@ def main():
                 except UserLogoutException:
                     session = None
     except (KeyboardInterrupt, GracefulShutdownException):
+        clear()
         pass
 
 if __name__ == "__main__":

@@ -119,7 +119,7 @@ class PasswordViewScreen:
             raise KeyboardInterrupt
 
         @kb.add("c")
-        def _(event):
+        def _(_):
             copy_to_clipboard(self.password)
 
         app = Application(
@@ -171,7 +171,7 @@ class PasswordGenerationViewScreen:
             raise KeyboardInterrupt
 
         @kb.add("c")
-        def _(event):
+        def _(_):
             copy_to_clipboard(self.password)
 
         app = Application(
@@ -314,9 +314,13 @@ class QrCodeScreen:
         return text
 
     def _secret_text(self) -> Text:
+        spaced_secret = " ".join(
+                self.secret[i:i + 8] for i in range(0, len(self.secret), 8)
+        )
+
         text = Text()
         text.append("Or enter this secret manually:\n", style="dim")
-        text.append(self.secret, style="bold yellow")
+        text.append(spaced_secret, style="bold yellow")
         return text
 
     def run(self) -> None:
@@ -344,6 +348,10 @@ class QrCodeScreen:
         @kb.add("c-c")
         def _(_):
             raise KeyboardInterrupt
+
+        @kb.add("c")
+        def _(_):
+            copy_to_clipboard(self.secret)
 
         app = Application(
             layout=Layout(
