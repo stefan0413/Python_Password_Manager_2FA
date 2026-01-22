@@ -129,3 +129,39 @@ def delete_password_entry(entry_id: int, user_id: int) -> None:
             "DELETE FROM password_entries WHERE id = ? AND user_id = ?",
             (entry_id, user_id),
         )
+
+def search_password_entries(
+    user_id: int,
+    keyword: str,
+    group_id: int | None = None,
+) -> list[tuple[int, str, str]]:
+
+    params: list[str | int] = [user_id]
+    group_filter = ""
+
+    if group_id is not None:
+        group_filter = " AND group_id = ?"
+        params.append(group_id)
+
+    like = f"%{keyword}%"
+    params.extend([like, like, like, like])
+
+    with db() as conn:
+        rows = conn.execute(
+            f"""
+            SELECT id, title, account_username
+            FROM password_entries
+            WHERE user_id = ?
+            {group_filter}
+            AND (
+                title LIKE ?
+                OR account_username LIKE ?
+                OR service_url LIKE ?
+                OR notes LIKE ?
+            )
+            ORDER BY created_at DESC
+            """,
+            tuple(params),
+        ).fetchall()
+
+    return rows

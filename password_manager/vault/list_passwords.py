@@ -6,7 +6,7 @@ from password_manager.storage.password_entries import (
     list_password_entries,
     get_password_entry,
     update_password_entry,
-    delete_password_entry
+    delete_password_entry, search_password_entries
 )
 from password_manager.model import AuthSession
 from password_manager.vault.groups import select_group_id_optional
@@ -184,3 +184,40 @@ def _view_password(entry_id: int, session: AuthSession) -> None:
                     positive=True,
                 ).run()
                 break
+
+def search_passwords_flow(session: AuthSession) -> None:
+    keyword = InputScreen(
+        title="Search",
+        prompt="Enter keyword",
+    ).run()
+
+    if not keyword:
+        return
+
+    results = search_password_entries(
+        user_id=session.user_id,
+        keyword=keyword,
+    )
+
+    if not results:
+        MessageScreen(
+            title="Search",
+            message="No matching passwords found.",
+        ).run()
+        return
+
+    items = [f"{title} ({username})" for _, title, username in results] + ["Back"]
+
+    choice = Menu(
+        title="Search results",
+        subtitle="Search passwords by keyword",
+        items=items,
+    ).run()
+
+    if choice == "Back":
+        return
+
+    index = items.index(choice)
+    entry_id = results[index][0]
+
+    _view_password(entry_id, session)
