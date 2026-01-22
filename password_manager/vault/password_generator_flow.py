@@ -1,9 +1,13 @@
-from password_manager.cli import Menu, MessageScreen, InputScreen
+from prompt_toolkit.key_binding import KeyBindings
+
+from password_manager.cli import Menu, MessageScreen, InputScreen, PasswordGenerationViewScreen
 from password_manager.vault.password_generator import (
     generate_password,
     generate_passphrase,
 )
 from password_manager.utils.clipboard import copy_to_clipboard
+
+kb = KeyBindings()
 
 def input_int_with_retry(
     *,
@@ -117,12 +121,9 @@ def _random_password_flow() -> None:
 
         break
 
-    copy_to_clipboard(password)
-
-    MessageScreen(
-        title="Password Generated",
-        message=f"{password}\n\n(Copied to clipboard - will be erased after 20s)",
-        positive=True,
+    PasswordGenerationViewScreen(
+            title="Passphrase Generated",
+            password=password,
     ).run()
 
     del password
@@ -157,13 +158,9 @@ def _passphrase_flow() -> None:
 
         break
 
-    copy_to_clipboard(passphrase)
-
-    MessageScreen(
+    PasswordGenerationViewScreen(
         title="Passphrase Generated",
-        message=f"{passphrase}\n\n(Copied to clipboard - will be erased after 20s)",
-        positive=True,
+        password = passphrase,
     ).run()
 
     del passphrase
-

@@ -66,6 +66,7 @@ def _get_and_verify_password(username: str) -> tuple[int, bytes, bytes]:
         raise LoginException
 
     aes_key = crypto.derive_aes_key(password)
+
     #deleting this so the plain password is not stored in any way
     del password
 

@@ -1,5 +1,3 @@
-import io
-
 from qrcode.main import QRCode
 from rich.console import Console, Group
 from rich.panel import Panel
@@ -18,6 +16,7 @@ from password_manager.utils.clipboard import copy_to_clipboard
 
 
 console = Console()
+kb = KeyBindings()
 
 class Menu:
     def __init__(self, title: str, subtitle: str, items: list[str]):
@@ -49,8 +48,6 @@ class Menu:
         return capture.get()
 
     def run(self) -> str | None:
-        kb = KeyBindings()
-
         @kb.add("up")
         def _(_):
             self.selected = (self.selected - 1) % len(self.items)
@@ -111,9 +108,59 @@ class PasswordViewScreen:
             console.print(panel)
 
         rendered = capture.get()
-        kb = KeyBindings()
 
-        # Exit
+        @kb.add("enter")
+        @kb.add("escape")
+        def _(event):
+            event.app.exit()
+
+        @kb.add("c-c")
+        def _(_):
+            raise KeyboardInterrupt
+
+        @kb.add("c")
+        def _(event):
+            copy_to_clipboard(self.password)
+
+        app = Application(
+            layout=Layout(
+                Window(
+                    FormattedTextControl(ANSI(rendered)),
+                    always_hide_cursor=True,
+                )
+            ),
+            key_bindings=kb,
+            full_screen=True,
+        )
+
+        app.run()
+
+class PasswordGenerationViewScreen:
+    def __init__(
+        self,
+        *,
+        title: str,
+        password: str,
+    ):
+        self.title = title
+        self.password = password
+
+    def run(self) -> None:
+
+
+        color = "green"
+        panel = Panel(
+            f"[bold {color}]{self.title}[/bold {color}]\n\n"
+            f"{self.password}\n\n"
+            "[dim]Press Enter to continue | Press C to copy to clipboard[/dim]",
+            border_style=color,
+        )
+
+        with console.capture() as capture:
+            console.print(panel)
+
+        rendered = capture.get()
+
         @kb.add("enter")
         @kb.add("escape")
         def _(event):
@@ -160,7 +207,6 @@ class MessageScreen:
             console.print(panel)
 
         rendered = capture.get()
-        kb = KeyBindings()
 
         @kb.add("enter")
         @kb.add("escape")
@@ -210,8 +256,6 @@ class InputScreen:
         frame = Frame(
             HSplit([title_area, input_area, footer], padding=1),
         )
-
-        kb = KeyBindings()
 
         @kb.add("enter")
         def _(event):
@@ -292,7 +336,6 @@ class QrCodeScreen:
             console.print(panel)
 
         rendered = capture.get()
-        kb = KeyBindings()
 
         @kb.add("enter")
         def _(event):
