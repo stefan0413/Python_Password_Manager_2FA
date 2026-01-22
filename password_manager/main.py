@@ -2,6 +2,7 @@ from password_manager.exceptions import GracefulShutdownException, UserLogoutExc
 from password_manager.model import AuthSession
 from password_manager.storage import init_db
 from password_manager.vault.add_password import add_password_flow
+from password_manager.vault.groups import create_group_flow
 from password_manager.vault.list_passwords import list_passwords_flow
 from password_manager.vault.password_generator_flow import password_generator_flow
 from . import auth
@@ -47,6 +48,7 @@ def _handle_session (session: AuthSession) -> None:
                 "Add password",
                 "List passwords",
                 "Generate password",
+                "Create group",
                 "Logout",
                 "Exit",
             ],
@@ -60,6 +62,8 @@ def _handle_session (session: AuthSession) -> None:
         list_passwords_flow(session)
     elif choice == "Generate password":
         password_generator_flow()
+    elif choice == "Create group":
+        create_group_flow(session)
     elif choice == "Logout":
         raise UserLogoutException
 

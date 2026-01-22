@@ -3,6 +3,7 @@ from password_manager.crypto import aes_encrypt
 from password_manager.exceptions import InvalidArgumentException
 from password_manager.storage.password_entries import add_password_entry
 from password_manager.model import AuthSession
+from password_manager.vault.groups import select_group_id_optional
 
 
 def _input_field(prompt: str, password: bool = False) -> str:
@@ -32,6 +33,7 @@ def add_password_flow(session: AuthSession) -> None:
 
     service_url = _optional_input("Service URL (optional)")
     notes = _optional_input("Notes")
+    group_id = select_group_id_optional(session)
 
     encrypted_password = aes_encrypt(
         plaintext_password.encode(),
@@ -40,7 +42,7 @@ def add_password_flow(session: AuthSession) -> None:
 
     add_password_entry(
         user_id=session.user_id,
-        group_id=None,
+        group_id=group_id,
         title=title,
         service_url=service_url,
         account_username=account_username,

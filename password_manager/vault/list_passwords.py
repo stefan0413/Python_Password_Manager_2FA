@@ -1,6 +1,7 @@
 from password_manager.cli import Menu, MessageScreen, InputScreen, PasswordViewScreen
 from password_manager.crypto import aes_encrypt, aes_decrypt
 from password_manager.password_entry import PasswordEntry
+from password_manager.storage.groups import list_groups
 from password_manager.storage.password_entries import (
     list_password_entries,
     get_password_entry,
@@ -8,9 +9,28 @@ from password_manager.storage.password_entries import (
     delete_password_entry
 )
 from password_manager.model import AuthSession
+from password_manager.vault.groups import select_group_id_optional
+
+def _select_group(session: AuthSession)-> int | None:
+    groups = list_groups(session.user_id)
+    items = ["All"] + [name for _, name in groups]
+
+    choice = Menu(
+            title="Passwords",
+            subtitle="Filter by group",
+            items=items,
+    ).run()
+
+    group_id = None
+    if choice != "All":
+        group_id = groups[items.index(choice) - 1][0]
+
+    return group_id
 
 def list_passwords_flow(session: AuthSession) -> None:
-    rows = list_password_entries(session.user_id)
+    group_id = _select_group(session)
+
+    rows = list_password_entries(session.user_id, group_id)
 
     if not rows:
         MessageScreen(
@@ -46,13 +66,6 @@ def _edit_password(entry: PasswordEntry, session: AuthSession) -> None:
         prompt=f"Title ({entry.title})",
     ).run() or entry.title
 
-    service_url = InputScreen(
-        title="Edit Password",
-        prompt=f"Service URL ({entry.service_url or 'none'})",
-    ).run()
-    if service_url == "":
-        service_url = entry.service_url
-
     account_username = InputScreen(
         title="Edit Password",
         prompt=f"Username ({entry.account_username})",
@@ -72,6 +85,13 @@ def _edit_password(entry: PasswordEntry, session: AuthSession) -> None:
     else:
         encrypted_password = entry.password_encrypted
 
+    service_url = InputScreen(
+            title="Edit Password",
+            prompt=f"Service URL ({entry.service_url or 'none'})",
+    ).run()
+    if service_url == "":
+        service_url = entry.service_url
+
     notes = InputScreen(
         title="Edit Password",
         prompt=f"Notes ({entry.notes or 'none'})",
@@ -79,9 +99,12 @@ def _edit_password(entry: PasswordEntry, session: AuthSession) -> None:
     if notes == "":
         notes = entry.notes
 
+    group_id = select_group_id_optional(session)
+
     update_password_entry(
         entry_id=entry.id,
         user_id=session.user_id,
+        group_id=group_id,
         title=title,
         service_url=service_url,
         account_username=account_username,

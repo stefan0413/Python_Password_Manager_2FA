@@ -62,23 +62,36 @@ def get_password_entry(entry_id: int, user_id: int) -> PasswordEntry | None:
 
     return PasswordEntry(*row)
 
-def list_password_entries(user_id: int) -> list[tuple[int, str, str]]:
+def list_password_entries(
+    user_id: int,
+    group_id: int | None,
+) -> list[tuple[int, str, str]]:
+
+    params: list[int] = [user_id]
+    group_select_query = ""
+
+    if group_id is not None:
+        group_select_query = " AND group_id = ?"
+        params.append(group_id)
+
     with db() as conn:
         rows = conn.execute(
-            """
+            f"""
             SELECT id, title, account_username
             FROM password_entries
-            WHERE user_id = ?
+            WHERE user_id = ?{group_select_query}
             ORDER BY created_at DESC
             """,
-            (user_id,)
+            tuple(params),
         ).fetchall()
 
     return rows
 
+
 def update_password_entry(
     entry_id: int,
     user_id: int,
+    group_id: int | None,
     title: str,
     service_url: str | None,
     account_username: str,
@@ -89,7 +102,8 @@ def update_password_entry(
         conn.execute(
             """
             UPDATE password_entries
-            SET title = ?,
+            SET group_id = ?,
+                title = ?,
                 service_url = ?,
                 account_username = ?,
                 password_encrypted = ?,
@@ -98,6 +112,7 @@ def update_password_entry(
             WHERE id = ? AND user_id = ?
             """,
             (
+                group_id,
                 title,
                 service_url,
                 account_username,
