@@ -351,7 +351,7 @@ class QrCodeScreen:
 
         @kb.add("c")
         def _(_):
-            copy_to_clipboard(self.secret)
+            copy_to_clipboard(self.secret, True)
 
         app = Application(
             layout=Layout(

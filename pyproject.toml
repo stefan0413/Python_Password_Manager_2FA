@@ -1,0 +1,29 @@
+[project]
+name = "password-manager"
+version = "0.1.0"
+dependencies = [
+    "bcrypt",
+    "cryptography",
+    "rich",
+    "prompt-toolkit",
+    "pyotp",
+    "qrcode",
+    "pyperclip",
+    "wordfreq",
+    "pytest-mock",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "--strict-markers"
+
+[tool.coverage.run]
+branch = true
+omit = [
+    "password_manager/cli.py",
+    "password_manager/main.py",
+    "password_manager/vault/*_flow.py",
+    "password_manager/vault/list_passwords.py",
+    "password_manager/vault/groups.py",
+    "password_manager/vault/add_password.py",
+]
