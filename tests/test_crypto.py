@@ -1,3 +1,4 @@
+import pytest
 from password_manager.crypto import (
     hash_master_password,
     verify_master_password,
@@ -6,30 +7,20 @@ from password_manager.crypto import (
     aes_decrypt,
 )
 
-def test_password_hash_and_verify():
-    password = "SuperSecret123!"
-    hashed = hash_master_password(password)
 
-    assert verify_master_password(password, hashed)
+def test_password_hash_and_verify():
+    hashed = hash_master_password("secret")
+    assert verify_master_password("secret", hashed)
     assert not verify_master_password("wrong", hashed)
 
-def test_aes_encrypt_decrypt_roundtrip():
+
+def test_aes_roundtrip():
     key = derive_aes_key("password")
-    data = b"secret-data"
+    data = b"data"
+    assert aes_decrypt(aes_encrypt(data, key), key) == data
 
-    encrypted = aes_encrypt(data, key)
-    decrypted = aes_decrypt(encrypted, key)
 
-    assert decrypted == data
-
-def test_wrong_key_fails():
-    key1 = derive_aes_key("password1")
-    key2 = derive_aes_key("password2")
-
-    encrypted = aes_encrypt(b"data", key1)
-
-    try:
-        aes_decrypt(encrypted, key2)
-        assert False, "Decryption should fail"
-    except Exception:
-        assert True
+def test_aes_wrong_key():
+    encrypted = aes_encrypt(b"x", derive_aes_key("a"))
+    with pytest.raises(Exception):
+        aes_decrypt(encrypted, derive_aes_key("b"))
