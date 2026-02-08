@@ -28,3 +28,7 @@ def test_invalid_constraints():
 def test_generate_passphrase():
     phrase = generate_passphrase(words=4)
     assert len(phrase.split("-")) == 4
+
+def test_generate_password_invalid_length():
+    with pytest.raises(ValueError):
+        generate_password(0)

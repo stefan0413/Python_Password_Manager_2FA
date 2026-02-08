@@ -1,4 +1,6 @@
 from password_manager.model import AuthSession
+from password_manager.storage import init_groups_table
+from password_manager.storage.groups import list_groups
 from password_manager.vault.groups import (
     create_group_flow,
     select_group_id_optional,
@@ -43,3 +45,7 @@ def test_select_group_id_optional_choice(mocker):
     group_id = select_group_id_optional(session)
 
     assert group_id == 2
+
+def test_list_groups_empty():
+    init_groups_table()
+    assert list_groups(user_id=999) == []
