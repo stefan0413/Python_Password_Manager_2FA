@@ -44,7 +44,6 @@ def _get_existing_username() -> str:
 
     user = users.get_user_with_2fa(username)
     if not user:
-        # making bruteforce harder as it's better to avoid showing that a specific username does not exist
         _get_password()
         _error(MSG_INVALID_CREDENTIALS)
         raise LoginException
@@ -80,7 +79,6 @@ def _get_and_verify_password(username: str) -> tuple[int, bytes, bytes]:
 
     aes_key = crypto.derive_aes_key(password)
 
-    #deleting this so the plain password is not stored in any way
     del password
 
     return user_id, aes_key, encrypted_secret
